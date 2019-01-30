@@ -1,0 +1,179 @@
+jobs:
+  checkout_source:
+    docker:
+      - image: circleci/node:8.12.0-stretch
+    steps:
+      - checkout
+      - run:
+          name: save SHA to a file
+          command: echo $CIRCLE_SHA1 > .circle-sha
+      - save_cache:
+          key: repository-{{ checksum ".circle-sha" }}
+          paths:
+            - .
+  install_dependencies:
+    docker:
+      - image: circleci/node:8.12.0-stretch
+    steps:
+      - run:
+          name: save SHA to a file
+          command: echo $CIRCLE_SHA1 > .circle-sha
+      - restore_cache:
+          keys:
+            - repository-{{ checksum ".circle-sha" }}
+      - restore_cache:
+          keys:
+            - dependencies-{{ checksum "package.json" }}
+      - run: npm install
+      - save_cache:
+          key: dependencies-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+  test:
+    docker:
+      - image: circleci/node:8.12.0-stretch
+      - image: mongo:4.1.5-xenial
+      - image: rabbitmq:3.6-alpine
+    steps:
+      - run:
+          name: save SHA to a file
+          command: echo $CIRCLE_SHA1 > .circle-sha
+      - restore_cache:
+          keys:
+            - repository-{{ checksum ".circle-sha" }}
+      - restore_cache:
+          keys:
+            - dependencies-{{ checksum "package.json" }}
+      - run:
+          name: lint
+          command: npm run lint
+      - run:
+          name: test
+          command: NODE_ENV=test npm test
+  build:
+    docker:
+      - image: circleci/node:8.12.0-stretch
+    steps:
+      - run:
+          name: save SHA to a file
+          command: echo $CIRCLE_SHA1 > .circle-sha
+      - restore_cache:
+          keys:
+            - repository-{{ checksum ".circle-sha" }}
+      - restore_cache:
+          keys:
+            - dependencies-{{ checksum "package.json" }}
+      - run: npm run build
+      - save_cache:
+          key: build-{{ checksum ".circle-sha" }}
+          paths:
+            - build
+  build_image:
+    docker:
+      - image: highoutputdev/circleci:6
+    steps:
+      - setup_remote_docker:
+          version: 18.05.0-ce
+          reusable: true
+      - run:
+          name: save SHA to a file
+          command: echo $CIRCLE_SHA1 > .circle-sha
+      - restore_cache:
+          keys:
+            - repository-{{ checksum ".circle-sha" }}
+      - restore_cache:
+          keys:
+            - build-{{ checksum ".circle-sha" }}
+      - run:
+          name: build docker image
+          command: >
+            docker build .
+            --tag $DOCKER_REGISTRY/$IMAGE_NAME:$CIRCLE_BUILD_NUM
+      - run:
+          name: configure aws cli
+          command: ~/configure_aws_cli.sh
+      - run:
+          name: login to docker registry
+          command: eval `aws ecr get-login --no-include-email --region ap-southeast-1`
+      - run:
+          name: push docker image to docker registry
+          command: docker push $DOCKER_REGISTRY/$IMAGE_NAME:$CIRCLE_BUILD_NUM
+      - run:
+          name: tag latest image
+          command: docker tag $DOCKER_REGISTRY/$IMAGE_NAME:$CIRCLE_BUILD_NUM $DOCKER_REGISTRY/$IMAGE_NAME:latest
+      - run:
+          name: push latest image
+          command: docker push $DOCKER_REGISTRY/$IMAGE_NAME:latest
+      - run:
+          name: store version number
+          command: echo $CIRCLE_BUILD_NUM > .version
+      - store_artifacts:
+          path: .version
+      - save_cache:
+          key: version-{{ checksum ".circle-sha" }}
+          paths:
+            - .version
+  deploy:
+    docker:
+      - image: highoutputdev/circleci:6
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - 'ee:c6:87:ae:64:fb:7f:19:c0:a0:8a:56:34:0d:12:19'
+      - run:
+          name: save SHA to a file
+          command: echo $CIRCLE_SHA1 > .circle-sha
+      - restore_cache:
+          keys:
+            - repository-{{ checksum ".circle-sha" }}
+      - restore_cache:
+          keys:
+            - version-{{ checksum ".circle-sha" }}
+      - run:
+          name: ecr login
+          command: >
+            ssh -o ServerAliveInterval=100 -o "StrictHostKeyChecking no"
+            ubuntu@swarm.development.aonewallet.com
+            sudo ansible-playbook ecr_login.yml
+      - run:
+          name: update api service image
+          command: >
+            ssh -o ServerAliveInterval=100 -o "StrictHostKeyChecking no"
+            ubuntu@swarm.development.aonewallet.com
+            sudo docker service update --image $DOCKER_REGISTRY/${IMAGE_NAME}:`cat .version` --with-registry-auth ${SERVICE_NAME}
+workflows:
+  version: 2
+  'Test, Build and Deploy':
+    jobs:
+      - checkout_source
+      - install_dependencies:
+          requires:
+            - checkout_source
+      - test:
+          requires:
+            - install_dependencies
+      - build:
+          requires:
+            - install_dependencies
+          filters:
+            branches:
+              only:
+                - develop
+                - master
+      - build_image:
+          requires:
+            - test
+            - build
+          filters:
+            branches:
+              only:
+                - develop
+                - master
+      - deploy:
+          requires:
+            - build_image
+          filters:
+            branches:
+              only:
+                - develop
+                - master
