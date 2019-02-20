@@ -53,7 +53,7 @@
     "luxon": "^1.10.0",
     "mongoose": "^5.3.10",
     "onewallet.library.error": "git+https://git@github.com/Proto-Garage/onewallet.library.error.git#0.0.2",
-    "onewallet.library.rabbit": "git+https://git@github.com/Proto-Garage/onewallet.library.rabbit.git#0.4.8",
+    "onewallet.library.rabbit": "git+https://git@github.com/Proto-Garage/onewallet.library.rabbit.git#v0.4.11",
     "ramda": "^0.25.0"
   }
 }
