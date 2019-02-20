@@ -1,7 +1,7 @@
 import exitHook from 'async-exit-hook';
 
 import logger from './library/logger';
-import { start, stop } from './maintenance-service';
+import { start, stop } from './message-service';
 
 start().catch(err => logger.error(err));
 
