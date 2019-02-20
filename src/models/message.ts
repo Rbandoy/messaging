@@ -1,6 +1,13 @@
 import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema({},{
+  toJSON: {
+    transform: function(_doc, ret) {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    },
+  },
   strict: false
 });
 interface MessageBody {

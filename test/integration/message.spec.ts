@@ -7,7 +7,7 @@ import MessageModel from '../../src/models/message';
 const { expect } = chai;
 
 let client: (...args: Array<any>) => Promise<any>;
-const messageData = {
+const createMessageData = {
   enMessageBody: {
     title: uuid(),
     content: uuid()
@@ -19,7 +19,10 @@ const messageData = {
   targetMember: uuid(),
   targetMemberLevels: uuid()
 }
-
+const viewMessagesData = {
+  first: 5,
+  after: ''
+}
 describe('Message', async () => {
   before(async () => {
     const rabbit = new Rabbit();
@@ -28,14 +31,22 @@ describe('Message', async () => {
   });
   describe('Create Message', () => {
     it('should create message from database', async () => {
-      const data = messageData;
+      const data = createMessageData;
       await client({ type: 'CreateMessage', data }); 
       const document = await MessageModel.findOne({
-        targetMember: messageData.targetMember,
-        targetMemberLevels: messageData.targetMemberLevels
+        targetMember: createMessageData.targetMember,
+        targetMemberLevels: createMessageData.targetMemberLevels
       });
       await delay(100);
       expect(document).to.be.an('object');
+    });
+  });
+  describe('View Message', () => {
+    it('should view all message', async () => {
+      const data = viewMessagesData;
+      await client({ type: 'ViewMessages', data });
+      const result = await MessageModel.find(); 
+      expect(result).to.be.an('array'); 
     });
   });
 });

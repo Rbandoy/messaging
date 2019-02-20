@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { MessageModel } from './models/message';
 import rabbit from './library/rabbit';
 import logger from './library/logger';
+import * as R from 'ramda';
 // import { any } from 'bluebird';
 
 let worker: any;
@@ -25,8 +26,30 @@ export async function start() {
       return document._id;
     }
 
-    if (type === 'ViewMessages') {
-      
+    if (type === 'Message') {
+      const criteria = {};
+      const count = data.first || 50;
+
+      if (data.after) {
+        Object.assign(criteria, { _id: { $lt: data.after } });
+      }
+
+      const edges = (await MessageModel.find(criteria)
+        .sort({ _id: -1 })
+        .limit(count))
+        .map(row => row.toJSON())
+        .map(row => ({
+          cursor: row.id,
+          node: row,
+        }));  
+      return {
+        totalCount: edges.length,
+        edges: edges,
+        pageInfo: {
+          endCursor: R.last(edges) ? R.last(edges)!.cursor : null,
+          hasNextPage: edges.length === count,
+        },
+      };  
     }
   });
   logger.info('started');

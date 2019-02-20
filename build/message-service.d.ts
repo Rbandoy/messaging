@@ -1,3 +1,3 @@
 export declare function start(): Promise<void>;
 export declare function stop(): Promise<void>;
-//# sourceMappingURL=maintenance-service.d.ts.map
+//# sourceMappingURL=message-service.d.ts.map
