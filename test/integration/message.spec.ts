@@ -20,7 +20,7 @@ const createMessageData = {
   targetMemberLevels: uuid()
 }
 const viewMessagesData = {
-  first: 5,
+  first: 0,
   after: ''
 }
 describe('Message', async () => {
@@ -44,7 +44,7 @@ describe('Message', async () => {
   describe('View Message', () => {
     it('should view all message', async () => {
       const data = viewMessagesData;
-      await client({ type: 'ViewMessages', data });
+      await client({ type: 'Message', data });
       const result = await MessageModel.find(); 
       expect(result).to.be.an('array'); 
     });
