@@ -1,0 +1,19 @@
+import mongoose from 'mongoose';
+
+const messageSchema = new mongoose.Schema({},{
+  strict: false
+});
+interface MessageBody {
+  title: string
+  content: string
+}
+export interface MessageAttribute {
+  enMessageBody: MessageBody;
+  zhMessageBody: MessageBody;
+  targetMember: string;
+  targetMemberLevels: string
+}
+
+export type MessageDocument = mongoose.Document & MessageAttribute;
+export  const MessageModel = mongoose.model<MessageDocument>('message', messageSchema);
+export default MessageModel;
