@@ -20,7 +20,7 @@ async function start() {
     logger_1.default.info('starting');
     await mongoose_1.default.connect(process.env.MONGODB_URI || 'mongodb://localhost/onewallet', {
         useCreateIndex: true,
-        useNewUrlParser: true
+        useNewUrlParser: true,
     });
     worker = await rabbit_1.default.createWorker('Message', async ({ type, data }) => {
         logger_1.default.tag('worker').verbose({ type, data });
@@ -28,7 +28,7 @@ async function start() {
             const document = await message_1.MessageModel.create(data);
             return document._id;
         }
-        if (type === 'ViewMessages') {
+        if (type === 'Message') {
             const criteria = {};
             const count = data.first || 50;
             if (data.after) {

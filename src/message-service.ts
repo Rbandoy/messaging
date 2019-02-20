@@ -3,7 +3,6 @@ import { MessageModel } from './models/message';
 import rabbit from './library/rabbit';
 import logger from './library/logger';
 import * as R from 'ramda';
-// import { any } from 'bluebird';
 
 let worker: any;
 export async function start() {
@@ -12,17 +11,15 @@ export async function start() {
     process.env.MONGODB_URI || 'mongodb://localhost/onewallet',
     {
       useCreateIndex: true,
-      useNewUrlParser: true
+      useNewUrlParser: true,
     }
   );
-  
+
   worker = await rabbit.createWorker('Message', async ({ type, data }) => {
-    logger.tag('worker').verbose({ type, data }); 
+    logger.tag('worker').verbose({ type, data });
 
     if (type === 'CreateMessage') {
-      const document = await MessageModel.create(
-        data
-      );
+      const document = await MessageModel.create(data);
       return document._id;
     }
 
@@ -41,7 +38,7 @@ export async function start() {
         .map(row => ({
           cursor: row.id,
           node: row,
-        }));  
+        }));
       return {
         totalCount: edges.length,
         edges: edges,
@@ -49,7 +46,7 @@ export async function start() {
           endCursor: R.last(edges) ? R.last(edges)!.cursor : null,
           hasNextPage: edges.length === count,
         },
-      };  
+      };
     }
   });
   logger.info('started');
