@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const messageSchema = new mongoose.Schema({},{
+const messageSchema = new mongoose.Schema({}, {
   toJSON: {
     transform: function(_doc, ret) {
       ret.id = ret._id;
