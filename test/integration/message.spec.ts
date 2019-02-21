@@ -44,7 +44,7 @@ describe('Message', async () => {
   describe('View Message', () => {
     it('should view all message', async () => {
       const data = viewMessagesData;
-      await client({ type: 'Message', data });
+      await client({ type: 'Messages', data });
       const result = await MessageModel.find();
       expect(result).to.be.an('array');
     });

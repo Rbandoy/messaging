@@ -23,7 +23,7 @@ export async function start() {
       return document._id;
     }
 
-    if (type === 'Message') {
+    if (type === 'Messages') {
       const criteria = {};
       const count = data.first || 50;
 
