@@ -27,7 +27,7 @@ describe('Message', async () => {
   before(async () => {
     const rabbit = new Rabbit();
     await service.start();
-    client = await rabbit.createClient('Message');
+    client = await rabbit.createClient('Messaging');
   });
   describe('Create Message', () => {
     it('should create message from database', async () => {
