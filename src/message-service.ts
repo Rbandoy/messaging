@@ -15,7 +15,7 @@ export async function start() {
     }
   );
 
-  worker = await rabbit.createWorker('Message', async ({ type, data }) => {
+  worker = await rabbit.createWorker('Messaging', async ({ type, data }) => {
     logger.tag('worker').verbose({ type, data });
 
     if (type === 'CreateMessage') {
