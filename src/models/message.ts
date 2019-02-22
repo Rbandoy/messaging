@@ -20,8 +20,8 @@ interface MessageBody {
 export interface MessageAttribute {
   enMessageBody: MessageBody;
   zhMessageBody: MessageBody;
-  targetMember: string;
-  targetMemberLevels: string;
+  targetMember: string[];
+  targetMemberLevels: string[];
 }
 
 export type MessageDocument = mongoose.Document & MessageAttribute;
